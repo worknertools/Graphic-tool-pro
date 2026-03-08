@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <title>Type play</title>
+    
+
+  </head>
+    
+  <body>
+  <!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>抽象轮廓图形生成器 - Blanc Style</title>
+    <style>
+        :root {
+            --bg-main: #ffffff;
+            --bg-preview: #d8d8d8;
+            --border-color: #e5e5e5;
+            --text-main: #000000;
+            --text-secondary: #999999;
+            --accent: #000000;
+        }
+* {
+        box-sizing: border-box;
+        -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+        background-color: var(--bg-main);
+        margin: 0;
+        padding: 0;
+        color: var(--text-main);
+        display: flex;
+        height: 100vh;
+        width: 100vw;
+        overflow: hidden;
+    }
+
+    /* 侧边栏布局 */
+    .sidebar {
+        width: 340px;
+        border-right: 1px solid var(--border-color);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        padding: 40px 30px;
+        overflow-y: auto;
+        background: var(--bg-main);
+        z-index: 10;
+    }
+
+    /* 极简上传区域 */
+    .file-upload {
+        border: 1px solid var(--border-color);
+        padding: 40px 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: border-color 0.2s;
+        margin-bottom: 40px;
+        font-size: 13px;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+    }
+
+    .file-upload:hover {
+        border-color: var(--text-main);
+    }
+
+    /* 控件组排版 */
+    .control-group {
+        margin-bottom: 35px;
+    }
+
+    .label-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+
+    label {
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+    }
+
+    .value-display {
+        font-size: 11px;
+        color: var(--text-secondary);
+        font-family: monospace;
+    }
+
+    /* 自定义滑块 */
+    input[type="range"] {
+        width: 100%;
+        -webkit-appearance: none;
+        background: transparent;
+        margin: 0;
+    }
+
+    input[type="range"]::-webkit-slider-runnable-track {
+        width: 100%;
+        height: 1px;
+        background: var(--border-color);
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        height: 12px;
+        width: 12px;
+        border-radius: 50%;
+        background: var(--accent);
+        cursor: pointer;
+        margin-top: -6px;
+    }
+
+    /* 复选框样式 */
+    .checkbox-group {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin-top: 10px;
+    }
+
+    .checkbox-group input {
+        margin-right: 10px;
+        accent-color: var(--accent);
+    }
+
+    /* 导出区域样式 */
+    .export-section {
+        margin-top: auto; 
+        padding-top: 20px;
+        margin-bottom: 40px; 
+    }
+
+    .export-label {
+        display: block;
+        margin-bottom: 12px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+    }
+
+    .btn-group {
+        display: flex;
+        flex-direction: row; 
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+
+    .btn {
+        background-color: var(--text-main);
+        color: #fff;
+        border: none;
+        padding: 15px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        cursor: pointer;
+        transition: opacity 0.2s;
+        flex: 1; 
+        text-align: center;
+        text-decoration: none;
+    }
+
+    .btn:hover { opacity: 0.8; }
+    
+    .btn:disabled { 
+        background-color: #f0f0f0; 
+        color: #ccc; 
+        cursor: not-allowed; 
+    }
+
+    .footer-credit {
+        font-size: 10px;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        text-align: left; 
+        margin-top: 80px; 
+    }
+
+    /* 右侧预览区 */
+    .main-content {
+        flex: 1;
+        background-color: var(--bg-preview);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        padding: 40px;
+    }
+
+    /* 画布样式 */
+    canvas {
+        height: 80vh; 
+        width: auto;
+        aspect-ratio: 3 / 4;
+        background-color: #ffffff;
+        display: block;
+        border: none;
+        box-shadow: none !important; 
+    }
+
+    /* Loading 动画 */
+    .spinner {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        width: 20px;
+        height: 20px;
+        border: 1px solid #eee;
+        border-top-color: #000;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        display: none;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+</style>
+</head>
+<body>
+<!-- 左侧控制栏 -->
+<aside class="sidebar">
+    <div class="file-upload" onclick="document.getElementById('fileInput').click()">
+        <input type="file" id="fileInput" accept="image/*" style="display: none">
+        <span>上传图片 Upload Image</span>
+    </div>
+
+    <div class="control-group">
+        <div class="label-row">
+            <label>平滑度 Smoothness</label>
+            <span id="val-blur" class="value-display">20</span>
+        </div>
+        <input type="range" id="blurRange" min="0" max="100" value="20">
+    </div>
+
+    <div class="control-group">
+        <div class="label-row">
+            <label>阈值 Threshold</label>
+            <span id="val-thresh" class="value-display">128</span>
+        </div>
+        <input type="range" id="threshRange" min="0" max="255" value="128">
+    </div>
+
+    <div class="control-group">
+        <div class="label-row">
+            <label>轮廓 Outline</label>
+            <span id="val-outline" class="value-display">12</span>
+        </div>
+        <input type="range" id="outlineRange" min="0" max="50" value="12">
+    </div>
+
+    <div class="control-group">
+        <label class="checkbox-group">
+            <input type="checkbox" id="invertCheck" checked> 
+            反转选区 Invert Selection
+        </label>
+    </div>
+
+    <!-- 导出部分 -->
+    <div class="export-section">
+        <label class="export-label">Export</label>
+        <div class="btn-group">
+            <button id="downloadPngBtn" class="btn">Save PNG</button>
+            <button id="downloadSvgBtn" class="btn">Save SVG</button>
+        </div>
+        <div class="footer-credit">© Design by Type play</div>
+    </div>
+</aside>
+
+<!-- 右侧预览 -->
+<main class="main-content">
+    <div id="spinner" class="spinner"></div>
+    <canvas id="mainCanvas"></canvas>
+</main>
+<script>
+    const fileInput = document.getElementById('fileInput');
+    const canvas = document.getElementById('mainCanvas');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+   
+    const blurSlider = document.getElementById('blurRange');
+    const threshSlider = document.getElementById('threshRange');
+    const outlineSlider = document.getElementById('outlineRange');
+    const invertCheck = document.getElementById('invertCheck');
+   
+    const downloadPngBtn = document.getElementById('downloadPngBtn');
+    const downloadSvgBtn = document.getElementById('downloadSvgBtn');
+    const spinner = document.getElementById('spinner');
+
+    const updateLabels = () => {
+        document.getElementById('val-blur').innerText = blurSlider.value;
+        document.getElementById('val-thresh').innerText = threshSlider.value;
+        document.getElementById('val-outline').innerText = outlineSlider.value;
+    };
+
+    let originalImage = null;
+
+    const COLOR_BG = [255, 255, 255];
+    const COLOR_OUTLINE = [30, 30, 30];
+    const COLOR_FILL = [210, 215, 220];
+
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files && e.target.files[0]) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    originalImage = img;
+                    const targetRatio = 3 / 4;
+                    const maxH = 1600;
+                    canvas.height = maxH;
+                    canvas.width = maxH * targetRatio;
+                    processImage();
+                }
+                img.src = event.target.result;
+            }
+            reader.readAsDataURL(e.target.files[0]);
+        }
+    });
+
+    [blurSlider, threshSlider, outlineSlider, invertCheck].forEach(el => {
+        el.addEventListener('input', () => {
+            updateLabels();
+            if(window.processTimeout) clearTimeout(window.processTimeout);
+            window.processTimeout = setTimeout(processImage, 50);
+        });
+    });
+
+    function processImage() {
+        if (!originalImage) return;
+        spinner.style.display = 'block';
+
+        requestAnimationFrame(() => {
+            const w = canvas.width;
+            const h = canvas.height;
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = w;
+            tempCanvas.height = h;
+            const tCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
+
+            tCtx.fillStyle = '#ffffff';
+            tCtx.fillRect(0, 0, w, h);
+
+            const scale = Math.min(w / originalImage.width, h / originalImage.height);
+            const drawW = originalImage.width * scale;
+            const drawH = originalImage.height * scale;
+            const dx = (w - drawW) / 2;
+            const dy = (h - drawH) / 2;
+
+            tCtx.drawImage(originalImage, 0, 0, originalImage.width, originalImage.height, dx, dy, drawW, drawH);
+
+            const blurAmount = parseInt(blurSlider.value);
+            if (blurAmount > 0) {
+                const blurCanvas = document.createElement('canvas');
+                blurCanvas.width = w;
+                blurCanvas.height = h;
+                const bCtx = blurCanvas.getContext('2d');
+                bCtx.filter = `blur(${blurAmount}px)`;
+                bCtx.drawImage(tempCanvas, 0, 0);
+                
+                tCtx.fillStyle = '#ffffff';
+                tCtx.fillRect(0,0,w,h);
+                tCtx.drawImage(blurCanvas, 0, 0);
+            }
+
+            const imgData = tCtx.getImageData(0, 0, w, h);
+            const data = imgData.data;
+            const threshold = parseInt(threshSlider.value);
+            const invert = invertCheck.checked;
+
+            for (let i = 0; i < data.length; i += 4) {
+                const gray = 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
+                let isSelected = invert ? (gray < threshold) : (gray > threshold);
+                if (isSelected) {
+                    data[i] = 255; data[i+1] = 255; data[i+2] = 255; data[i+3] = 255;
+                } else {
+                    data[i+3] = 0;
+                }
+            }
+            tCtx.putImageData(imgData, 0, 0);
+
+            const outlineThickness = parseInt(outlineSlider.value);
+            const outlineCanvas = document.createElement('canvas');
+            outlineCanvas.width = w;
+            outlineCanvas.height = h;
+            const oCtx = outlineCanvas.getContext('2d');
+
+            if (outlineThickness > 0) {
+                oCtx.filter = `blur(${outlineThickness}px)`;
+                oCtx.drawImage(tempCanvas, 0, 0);
+                oCtx.filter = 'none';
+                const outlineData = oCtx.getImageData(0, 0, w, h);
+                const oData = outlineData.data;
+                for (let i = 0; i < oData.length; i += 4) {
+                    if (oData[i+3] > 20) {
+                        oData[i] = COLOR_OUTLINE[0]; oData[i+1] = COLOR_OUTLINE[1]; oData[i+2] = COLOR_OUTLINE[2]; oData[i+3] = 255;
+                    } else {
+                        oData[i+3] = 0;
+                    }
+                }
+                oCtx.putImageData(outlineData, 0, 0);
+            } else {
+                oCtx.drawImage(tempCanvas, 0, 0);
+                oCtx.globalCompositeOperation = 'source-in';
+                oCtx.fillStyle = `rgb(${COLOR_OUTLINE.join(',')})`;
+                oCtx.fillRect(0,0,w,h);
+            }
+
+            ctx.fillStyle = `rgb(${COLOR_BG.join(',')})`;
+            ctx.fillRect(0, 0, w, h);
+            ctx.drawImage(outlineCanvas, 0, 0);
+
+            const fillCanvas = document.createElement('canvas');
+            fillCanvas.width = w;
+            fillCanvas.height = h;
+            const fCtx = fillCanvas.getContext('2d');
+            fCtx.drawImage(tempCanvas, 0, 0);
+            fCtx.globalCompositeOperation = 'source-in';
+            fCtx.fillStyle = `rgb(${COLOR_FILL.join(',')})`;
+            fCtx.fillRect(0, 0, w, h);
+
+            ctx.drawImage(fillCanvas, 0, 0);
+            spinner.style.display = 'none';
+        });
+    }
+
+    downloadPngBtn.addEventListener('click', () => {
+        if (!originalImage) return;
+        const link = document.createElement('a');
+        link.download = 'abstract_art.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    });
+
+    // --- 修改部分：实现真正的矢量 SVG 导出 ---
+    downloadSvgBtn.addEventListener('click', () => {
+        if (!originalImage) return;
+        spinner.style.display = 'block';
+
+        // 异步执行，防止UI卡死
+        setTimeout(() => {
+            const w = canvas.width;
+            const h = canvas.height;
+            const imgData = ctx.getImageData(0, 0, w, h).data;
+
+            // 像素追踪函数：将特定颜色的像素块转换为 SVG Path 路径
+            const traceColorToPath = (targetRgb) => {
+                let pathData = "";
+                for (let y = 0; y < h; y++) {
+                    for (let x = 0; x < w; x++) {
+                        const i = (y * w + x) * 4;
+                        // 匹配目标颜色（带微小容差防止渲染误差）
+                        const isMatch = Math.abs(imgData[i] - targetRgb[0]) < 5 && 
+                                      Math.abs(imgData[i+1] - targetRgb[1]) < 5 && 
+                                      Math.abs(imgData[i+2] - targetRgb[2]) < 5;
+                        
+                        if (isMatch) {
+                            let startX = x;
+                            // 向右扫描连续的同色像素
+                            while (x < w) {
+                                const nextI = (y * w + x) * 4;
+                                const isStillMatch = Math.abs(imgData[nextI] - targetRgb[0]) < 5 && 
+                                                     Math.abs(imgData[nextI+1] - targetRgb[1]) < 5 && 
+                                                     Math.abs(imgData[nextI+2] - targetRgb[2]) < 5;
+                                if (isStillMatch) x++; else break;
+                            }
+                            // 绘制矩形路径段：移动到(startX,y)，画横线，垂直下移1，画反向横线，闭合
+                            pathData += `M${startX} ${y}h${x - startX}v1h${startX - x}z `;
+                        }
+                    }
+                }
+                return pathData;
+            };
+
+            // 提取轮廓层和填充层
+            const outlinePath = traceColorToPath(COLOR_OUTLINE);
+            const fillPath = traceColorToPath(COLOR_FILL);
+
+            // 构建纯矢量 SVG 字符串
+            const svgString = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+    <rect width="100%" height="100%" fill="rgb(${COLOR_BG.join(',')})"/>
+    <path d="${outlinePath}" fill="rgb(${COLOR_OUTLINE.join(',')})" stroke="none"/>
+    <path d="${fillPath}" fill="rgb(${COLOR_FILL.join(',')})" stroke="none"/>
+</svg>`;
+
+            const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+            const link = document.createElement('a');
+            link.download = 'abstract_vector.svg';
+            link.href = URL.createObjectURL(blob);
+            link.click();
+            URL.revokeObjectURL(link.href);
+            spinner.style.display = 'none';
+        }, 50);
+    });
+</script>
+</body>
+</html>
+    
+  </body>
+  
+</html>
